@@ -1,0 +1,10 @@
+# Cabeceras de caché para Netlify (y compatibles).
+# Los archivos con hash se pueden cachear para siempre.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# El HTML nunca se cachea, para que siempre cargue la última versión.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

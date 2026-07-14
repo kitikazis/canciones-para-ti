@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Tema único: negro con una escala de rojos coherente ── */
+  :root {
+    /* Fondo y superficies */
+    --cream-bg: 12 10 11; /* negro con un matiz cálido casi imperceptible */
+    --cream-surface: 24 19 21; /* tarjetas: un escalón por encima del fondo */
+    --cream-border: 42 34 37; /* filete sutil y neutro */
+
+    /* Texto */
+    --ink: 245 240 241; /* principal: blanco cálido */
+    --ink-soft: 166 154 158; /* secundario: gris cálido (elegante, no rosa) */
+
+    /* Escala de rojos (acentos) */
+    --wine: 244 63 94; /* rojo carmín principal */
+    --wine-deep: 159 18 57; /* rojo profundo (degradados) */
+    --wine-soft: 251 113 133; /* rojo suave (etiquetas, corazones) */
+    --gold: 253 164 175; /* rosa delicado (líneas, íconos finos) */
+    --gold-soft: 254 205 211; /* rosa muy claro */
+
+    /* Fondo ambiental: una sola luz tenue arriba, muy sobria */
+    --body-glow:
+      radial-gradient(48rem 32rem at 50% -18%, rgba(159, 18, 57, 0.16), transparent 62%);
+    --scroll-track: #0c0a0b;
+    --scroll-thumb: #4a2530;
+    --scroll-thumb-hover: #9f1239;
+
+    color-scheme: dark;
+  }
+
+  /* ── Tema claro (se activa con data-theme="light" en <html>) ── */
+  :root[data-theme='light'] {
+    --cream-bg: 252 247 246; /* crema cálido */
+    --cream-surface: 255 255 255; /* tarjetas blancas */
+    --cream-border: 234 220 222; /* filete rosado muy suave */
+
+    --ink: 46 30 34; /* texto principal oscuro cálido */
+    --ink-soft: 122 106 111; /* secundario */
+
+    --wine: 225 29 72;
+    --wine-deep: 159 18 57;
+    --wine-soft: 190 24 93; /* rosa más profundo para contraste sobre crema */
+    --gold: 219 130 150;
+    --gold-soft: 244 179 194;
+
+    --body-glow:
+      radial-gradient(55rem 40rem at 50% -12%, rgba(244, 63, 94, 0.10), transparent 55%),
+      radial-gradient(42rem 42rem at -8% 32%, rgba(190, 18, 60, 0.06), transparent 60%),
+      radial-gradient(60rem 50rem at 50% 118%, rgba(244, 63, 94, 0.06), transparent 60%);
+    --scroll-track: #f3eaeb;
+    --scroll-thumb: #e6c9cf;
+    --scroll-thumb-hover: #d98ea0;
+
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream-bg text-ink font-sans antialiased;
+    background-image: var(--body-glow);
+    background-attachment: fixed;
+  }
+
+  /* Grano sutil sobre todo, da textura de "papel" premium */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.025;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background: rgb(var(--wine) / 0.3);
+    color: rgb(var(--ink));
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--wine) / 0.6);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.28em] text-wine-soft;
+  }
+
+  /* Título con un degradado monocromo muy sutil (elegante) */
+  .text-gradient {
+    @apply bg-gradient-to-b from-ink to-ink-soft bg-clip-text text-transparent;
+  }
+
+  /* Línea fina decorativa */
+  .hairline {
+    @apply h-px w-12 bg-gold/50;
+  }
+
+  /* Tarjeta base */
+  .card {
+    @apply rounded-2xl border border-cream-border bg-cream-surface shadow-soft;
+  }
+
+  /* Campo de texto reutilizable */
+  .field {
+    @apply w-full rounded-full border border-cream-border bg-cream-bg/70 px-6 py-3.5
+      text-ink placeholder:text-ink-soft/50 outline-none transition
+      focus:border-wine/60 focus:ring-4 focus:ring-wine/10;
+  }
+
+  /* Botón principal: sobrio, monocromo que invierte según el tema */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+      bg-ink px-8 py-3.5 text-sm font-medium tracking-wide text-cream-bg transition
+      hover:opacity-90 active:scale-[0.99]
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Botón de acento (carmín, sobrio) */
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+      bg-wine px-8 py-3.5 text-sm font-medium tracking-wide text-white transition
+      hover:bg-wine-deep active:scale-[0.99] disabled:opacity-50;
+  }
+
+  /* Botón secundario (contorno) */
+  .btn-listen {
+    @apply inline-flex items-center gap-2 rounded-full border border-cream-border
+      bg-cream-surface/70 px-4 py-2 text-sm font-medium text-ink-soft backdrop-blur-sm transition
+      hover:border-wine/40 hover:text-ink;
+  }
+}
+
+/* Scrollbar sutil acorde al tema */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
