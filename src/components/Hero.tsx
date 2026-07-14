@@ -34,7 +34,7 @@ export default function Hero({ visitorName }: HeroProps) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
-          {dedication.toName}
+          {visitorName || dedication.toName}
         </motion.p>
 
         <motion.div
