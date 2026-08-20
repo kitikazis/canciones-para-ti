@@ -4,50 +4,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Los valores viven como variables CSS en index.css y cambian según
-        // el modo (nocturno / claro). Conservo los nombres cream/ink/wine/gold
-        // para no tener que tocar cada componente.
+        // Los valores viven como variables CSS en index.css. `accent` es
+        // el único que cambia en caliente: lo reescribe el reproductor a
+        // partir de la carátula que está sonando.
         cream: {
-          bg: 'rgb(var(--cream-bg) / <alpha-value>)',
-          surface: 'rgb(var(--cream-surface) / <alpha-value>)',
-          border: 'rgb(var(--cream-border) / <alpha-value>)',
+          bg: 'rgb(var(--ground) / <alpha-value>)',
+          surface: 'rgb(var(--raised) / <alpha-value>)',
+          border: 'rgb(var(--rule) / <alpha-value>)',
         },
+        rule: 'rgb(var(--rule) / <alpha-value>)',
         ink: {
-          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
-          soft: 'rgb(var(--ink-soft) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--text) / <alpha-value>)',
+          soft: 'rgb(var(--muted) / <alpha-value>)',
         },
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        faint: 'rgb(var(--faint) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
+
+        // Nombres antiguos, para que el panel de admin siga funcionando
+        // sin reescribirlo entero.
         wine: {
-          DEFAULT: 'rgb(var(--wine) / <alpha-value>)',
-          deep: 'rgb(var(--wine-deep) / <alpha-value>)',
-          soft: 'rgb(var(--wine-soft) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          deep: 'rgb(var(--accent) / <alpha-value>)',
+          soft: 'rgb(var(--accent) / <alpha-value>)',
         },
         gold: {
-          DEFAULT: 'rgb(var(--gold) / <alpha-value>)',
-          soft: 'rgb(var(--gold-soft) / <alpha-value>)',
+          DEFAULT: 'rgb(var(--faint) / <alpha-value>)',
+          soft: 'rgb(var(--muted) / <alpha-value>)',
         },
       },
       fontFamily: {
-        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Archivo', 'system-ui', 'sans-serif'],
+        sans: ['Archivo', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
-      boxShadow: {
-        soft: '0 1px 2px rgba(0,0,0,0.18), 0 14px 34px -20px rgba(0,0,0,0.45)',
-        glow: '0 24px 70px -34px rgba(0,0,0,0.6)',
-      },
-      keyframes: {
-        shimmer: {
-          '0%': { opacity: '0.3', transform: 'scaleX(0.6)' },
-          '50%': { opacity: '1', transform: 'scaleX(1)' },
-          '100%': { opacity: '0.3', transform: 'scaleX(0.6)' },
-        },
-        floaty: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
-        },
-      },
-      animation: {
-        shimmer: 'shimmer 3.5s ease-in-out infinite',
-        floaty: 'floaty 6s ease-in-out infinite',
+      borderRadius: {
+        DEFAULT: '2px',
       },
     },
   },

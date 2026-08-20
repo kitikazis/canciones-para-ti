@@ -91,7 +91,7 @@ function Login() {
           <LockIcon />
         </span>
         <p className="eyebrow">Panel privado</p>
-        <h1 className="mt-3 font-display text-4xl font-medium text-gradient">
+        <h1 className="display mt-3 text-[2.4rem]">
           Registros
         </h1>
         <p className="mt-2 text-sm text-ink-soft">
@@ -305,7 +305,7 @@ function Dashboard({ email }: { email: string }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Panel privado</p>
-          <h1 className="mt-2 font-display text-5xl font-medium text-gradient">
+          <h1 className="display mt-2 text-[3rem]">
             Registros
           </h1>
           <p className="mt-2 text-sm text-ink-soft">
@@ -347,7 +347,7 @@ function Dashboard({ email }: { email: string }) {
       </div>
 
       {error && (
-        <p className="mt-6 rounded-xl border border-wine/40 bg-wine/5 p-4 text-sm text-wine-soft">
+        <p className="mt-6 rounded-[2px] border border-wine/40 bg-wine/5 p-4 text-sm text-wine-soft">
           {error}
         </p>
       )}
@@ -420,7 +420,7 @@ function Dashboard({ email }: { email: string }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.4) }}
-                  className="rounded-2xl border border-cream-border bg-cream-surface p-4 transition-colors hover:border-wine/30"
+                  className="rounded-[2px] border border-cream-border bg-cream-surface p-4 transition-colors hover:border-wine/30"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar name={m.name ?? '?'} />
@@ -433,7 +433,7 @@ function Dashboard({ email }: { email: string }) {
                       </p>
                     </div>
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap border-l-2 border-gold/50 pl-4 font-display text-lg italic leading-relaxed text-ink">
+                  <p className="mt-3 whitespace-pre-wrap border-l-2 border-gold/50 pl-4 display text-lg italic leading-relaxed text-ink">
                     {m.message}
                   </p>
                 </motion.li>
@@ -467,7 +467,7 @@ function Dashboard({ email }: { email: string }) {
               <ul className="mt-4 flex flex-col gap-2">
                 {bySong.map((song, i) => (
                   <Row key={song.title} index={i}>
-                    <span className="w-6 shrink-0 text-center font-display text-sm text-gold/70">
+                    <span className="w-6 shrink-0 text-center display text-sm text-gold/70">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -479,7 +479,7 @@ function Dashboard({ email }: { email: string }) {
                         {song.plays === 1 ? 'reproducción' : 'reproducciones'}
                       </p>
                     </div>
-                    <span className="shrink-0 font-display text-lg text-wine-soft">
+                    <span className="shrink-0 display text-lg text-wine-soft">
                       {fmtDur(song.seconds)}
                     </span>
                   </Row>
@@ -501,7 +501,7 @@ function Dashboard({ email }: { email: string }) {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.4) }}
-                      className="overflow-hidden rounded-2xl border border-cream-border bg-cream-surface transition-colors hover:border-wine/30"
+                      className="overflow-hidden rounded-[2px] border border-cream-border bg-cream-surface transition-colors hover:border-wine/30"
                     >
                       <button
                         onClick={() => setOpenPerson(open ? null : person.name)}
@@ -646,7 +646,7 @@ function Badge({ children }: { children: React.ReactNode }) {
 
 function Avatar({ name }: { name: string }) {
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-wine/25 to-wine-deep/25 font-display text-lg font-medium text-wine-soft ring-1 ring-wine/20">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-wine/25 to-wine-deep/25 display text-lg font-medium text-wine-soft ring-1 ring-wine/20">
       {name.charAt(0).toUpperCase()}
     </span>
   );
@@ -658,7 +658,7 @@ function Row({ index, children }: { index: number; children: React.ReactNode }) 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.4) }}
-      className="flex items-center gap-4 rounded-2xl border border-cream-border bg-cream-surface px-4 py-3 transition-colors hover:border-wine/30"
+      className="flex items-center gap-4 rounded-[2px] border border-cream-border bg-cream-surface px-4 py-3 transition-colors hover:border-wine/30"
     >
       {children}
     </motion.li>
@@ -675,9 +675,9 @@ function Stat({
   small?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-cream-border bg-cream-surface p-3 text-center sm:p-4">
+    <div className="rounded-[2px] border border-cream-border bg-cream-surface p-3 text-center sm:p-4">
       <p
-        className={`truncate font-display font-medium text-ink ${
+        className={`truncate display font-medium text-ink ${
           small ? 'text-base sm:text-xl' : 'text-2xl sm:text-4xl'
         }`}
         title={String(value)}
@@ -693,7 +693,7 @@ function Stat({
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="mt-6 rounded-2xl border border-dashed border-cream-border bg-cream-surface/50 p-12 text-center">
+    <div className="mt-6 rounded-[2px] border border-dashed border-cream-border bg-cream-surface/50 p-12 text-center">
       <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-cream-border text-ink-soft">
         <InboxIcon />
       </span>
@@ -705,7 +705,7 @@ function EmptyState({ text }: { text: string }) {
 function CenteredCard({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-sm rounded-3xl border border-cream-border bg-cream-surface/70 p-8 text-center shadow-glow backdrop-blur-xl">
+      <div className="w-full max-w-sm rounded-[2px] border border-cream-border bg-cream-surface p-8 text-center">
         {children}
       </div>
     </div>

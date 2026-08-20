@@ -5,194 +5,124 @@ import { track, visitorId } from '../lib/track';
 import { dedication } from '../data/songs';
 
 interface LetterProps {
-  /** Se llama cuando ya leyó la carta y entra a las canciones. */
   onEnter: (name: string) => void;
 }
 
-type Phase = 'sealed' | 'opening' | 'reading';
+type Phase = 'ask' | 'read';
 
+/**
+ * La entrada. Antes pedía permiso («Una carta para ti», «Escribe tu
+ * nombre para abrirla»); ahora pregunta y ya. Directo suena más seguro.
+ */
 export default function Letter({ onEnter }: LetterProps) {
   const [name, setName] = useState('');
-  const [phase, setPhase] = useState<Phase>('sealed');
+  const [phase, setPhase] = useState<Phase>('ask');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleOpen(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = name.trim();
     if (!value) {
-      setError('Escribe tu nombre para abrirla.');
+      setError('Escribe tu nombre.');
       return;
     }
 
     setSaving(true);
     setError(null);
 
-    // Guardamos el nombre ANTES de registrar, para que el evento ya lo lleve.
     try {
       localStorage.setItem('visitor_name', value);
     } catch {
-      /* si no hay almacenamiento, seguimos igual */
+      /* sin almacenamiento: seguimos igual */
     }
 
     if (isSupabaseConfigured && supabase) {
-      // El id lo generamos aquí en vez de pedírselo a la base: leerlo de
-      // vuelta exigiría dar permiso de lectura a los visitantes, y esa
-      // tabla solo debe poder leerla el admin.
+      // El id lo generamos aquí: leerlo de vuelta exigiría dar permiso
+      // de lectura a los visitantes, y esa tabla solo la lee el admin.
       const { error: dbError } = await supabase
         .from('visitors')
         .insert({ id: visitorId(), name: value });
       if (dbError) {
         setSaving(false);
-        setError('No se pudo continuar. Inténtalo de nuevo.');
+        setError('No se pudo continuar. Inténtalo otra vez.');
         console.error(dbError);
         return;
       }
     }
 
     track('enter', { meta: { name: value } });
-
     setSaving(false);
-    setPhase('opening');
-    // Da tiempo a la animación del sobre antes de mostrar la carta.
-    window.setTimeout(() => setPhase('reading'), 1200);
+    setPhase('read');
   }
 
-  const displayName = name.trim() || dedication.toName;
+  const shown = name.trim() || dedication.toName;
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-6 py-10">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16 sm:px-6">
       <AnimatePresence mode="wait">
-        {phase !== 'reading' ? (
+        {phase === 'ask' ? (
           <motion.div
-            key="envelope"
-            className="flex w-full max-w-[300px] flex-col items-center"
-            initial={{ opacity: 0, y: 16 }}
+            key="ask"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.5 }}
           >
-            {/* ── El sobre ── */}
-            <div
-              className="relative aspect-[7/5] w-[260px]"
-              style={{ perspective: 1000 }}
-            >
-              {/* Cuerpo del sobre */}
-              <div className="absolute inset-0 overflow-hidden rounded-2xl border border-cream-border bg-cream-bg shadow-glow">
-                {/* Pliegues laterales sutiles */}
-                <div className="absolute inset-0 opacity-60">
-                  <div className="absolute bottom-0 left-0 h-full w-full [clip-path:polygon(0_100%,50%_38%,0_0)] bg-cream-surface/40" />
-                  <div className="absolute bottom-0 right-0 h-full w-full [clip-path:polygon(100%_100%,50%_38%,100%_0)] bg-cream-surface/40" />
-                  <div className="absolute bottom-0 left-0 h-full w-full [clip-path:polygon(0_100%,50%_54%,100%_100%)] bg-cream-surface/70" />
-                </div>
-              </div>
+            <p className="k">Antes de entrar</p>
+            <h1 className="display mt-10 text-[3rem] leading-[0.95]">
+              ¿Quién eres?
+            </h1>
 
-              {/* La carta que asoma al abrir */}
-              <motion.div
-                className="absolute inset-x-6 top-6 rounded-md border border-cream-border bg-cream-surface"
-                style={{ height: '70%' }}
-                initial={{ y: 0, opacity: 0 }}
-                animate={
-                  phase === 'opening'
-                    ? { y: '-38%', opacity: 1 }
-                    : { y: 0, opacity: 0 }
-                }
-                transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              />
-
-              {/* Solapa superior (se abre) */}
-              <motion.div
-                className="absolute left-0 top-0 h-1/2 w-full origin-top [clip-path:polygon(0_0,100%_0,50%_100%)] border-t border-cream-border bg-cream-surface"
-                style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
-                animate={{ rotateX: phase === 'opening' ? -172 : 0 }}
-                transition={{ duration: 0.8, ease: 'easeInOut' }}
-              />
-
-              {/* Sello con la inicial */}
-              <motion.div
-                className="absolute left-1/2 top-[38%] z-10 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-wine font-display text-lg text-white ring-4 ring-cream-bg"
-                animate={{
-                  scale: phase === 'opening' ? 0 : 1,
-                  opacity: phase === 'opening' ? 0 : 1,
+            <form onSubmit={handleSubmit} className="mt-12">
+              <label htmlFor="nombre" className="k">
+                Tu nombre
+              </label>
+              <input
+                id="nombre"
+                autoFocus
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError(null);
                 }}
-                transition={{ duration: 0.3 }}
-              >
-                {displayName.charAt(0).toUpperCase()}
-              </motion.div>
-            </div>
+                maxLength={80}
+                autoComplete="name"
+                className="field mt-2"
+              />
 
-            {/* ── Nombre + abrir ── */}
-            <form onSubmit={handleOpen} className="mt-8 w-full text-center">
-              <p className="eyebrow">Una carta para ti</p>
-              <p className="mx-auto mt-2 text-sm leading-relaxed text-ink-soft">
-                Escribe tu nombre para abrirla.
-              </p>
+              {error && <p className="k-accent mt-3">{error}</p>}
 
-              <div className="mx-auto mt-5 w-full max-w-[240px]">
-                <input
-                  autoFocus
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="Tu nombre"
-                  maxLength={80}
-                  disabled={phase === 'opening'}
-                  className="w-full border-0 border-b border-cream-border bg-transparent pb-2 text-center
-                    font-display text-2xl text-ink placeholder:text-ink-soft/40
-                    outline-none transition focus:border-wine/70"
-                />
-              </div>
-
-              {error && <p className="mt-3 text-sm text-wine-soft">{error}</p>}
-
-              <button
-                type="submit"
-                disabled={saving || phase === 'opening'}
-                className="btn-accent mt-6"
-              >
-                {saving ? 'Abriendo...' : 'Abrir la carta'}
+              <button type="submit" disabled={saving} className="btn-solid mt-10">
+                {saving ? 'Entrando' : 'Entrar'}
               </button>
             </form>
           </motion.div>
         ) : (
-          <motion.div
-            key="reading"
-            className="w-full max-w-lg"
-            initial={{ opacity: 0, y: 24 }}
+          <motion.article
+            key="read"
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7 }}
           >
-            <div className="relative overflow-hidden rounded-2xl border border-cream-border bg-cream-surface px-7 py-12 shadow-glow sm:px-12 sm:py-14">
-              <p className="eyebrow text-center">Para</p>
-              <h1 className="mt-2 text-center font-display text-5xl font-medium italic text-ink sm:text-6xl">
-                {displayName}
-              </h1>
+            <p className="k">Para</p>
+            <h1 className="display mt-3 text-[3rem] leading-[0.95]">{shown}</h1>
 
-              <div className="mx-auto mt-7 hairline" />
-
-              <div className="mt-8 space-y-5 font-display text-xl leading-relaxed text-ink-soft sm:text-2xl">
-                <p>{dedication.intro}</p>
-                <p>{dedication.message}</p>
-              </div>
-
-              <p className="mt-9 text-sm text-ink-soft">{dedication.signature}</p>
-              <p className="mt-1 font-display text-2xl text-ink">
-                {dedication.fromName}
-              </p>
-
-              <div className="mt-10 text-center">
-                <button
-                  onClick={() => onEnter(displayName)}
-                  className="btn-primary"
-                >
-                  Escuchar las canciones
-                </button>
-              </div>
+            <div className="mt-10 space-y-5 border-t border-rule pt-8">
+              <p className="copy">{dedication.intro}</p>
+              <p className="copy text-ink">{dedication.message}</p>
             </div>
-          </motion.div>
+
+            <div className="mt-10">
+              <p className="k">{dedication.signature}</p>
+              <p className="display mt-2 text-2xl">{dedication.fromName}</p>
+            </div>
+
+            <button onClick={() => onEnter(shown)} className="btn-solid mt-12">
+              Empezar
+            </button>
+          </motion.article>
         )}
       </AnimatePresence>
     </div>

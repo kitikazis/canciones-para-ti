@@ -71,15 +71,15 @@ export default function LyricsSheet({ song, onClose }: LyricsSheetProps) {
     >
       {/* Fondo */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 "
         onClick={onClose}
       />
 
       {/* Hoja */}
       <motion.div
         className="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden
-          rounded-t-3xl border border-cream-border bg-cream-surface shadow-glow
-          sm:rounded-3xl"
+          rounded-none border border-rule bg-cream-surface
+          "
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -91,7 +91,7 @@ export default function LyricsSheet({ song, onClose }: LyricsSheetProps) {
         </div>
 
         {/* Encabezado */}
-        <div className="flex items-center gap-3 border-b border-cream-border px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-rule px-5 py-4">
           {song.cover && (
             <img
               src={song.cover}
@@ -100,7 +100,7 @@ export default function LyricsSheet({ song, onClose }: LyricsSheetProps) {
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-xl font-medium leading-tight text-ink">
+            <p className="truncate display text-xl font-medium leading-tight text-ink">
               {song.title}
             </p>
             {song.artist && (
@@ -112,7 +112,7 @@ export default function LyricsSheet({ song, onClose }: LyricsSheetProps) {
           <button
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cream-border text-ink-soft transition hover:text-ink"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-rule text-ink-soft transition hover:text-ink"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -145,7 +145,7 @@ export default function LyricsSheet({ song, onClose }: LyricsSheetProps) {
 
           {state.status === 'ok' && (
             <>
-              <p className="whitespace-pre-wrap font-display text-lg leading-relaxed text-ink-soft">
+              <p className="whitespace-pre-wrap display text-lg leading-relaxed text-ink-soft">
                 {state.lyrics}
               </p>
               <p className="mt-8 text-center text-[11px] uppercase tracking-[0.2em] text-ink-soft/40">
