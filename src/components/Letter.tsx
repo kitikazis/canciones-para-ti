@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { track, visitorId } from '../lib/track';
 import { dedication } from '../data/songs';
 
 interface LetterProps {
@@ -27,10 +28,20 @@ export default function Letter({ onEnter }: LetterProps) {
     setSaving(true);
     setError(null);
 
+    // Guardamos el nombre ANTES de registrar, para que el evento ya lo lleve.
+    try {
+      localStorage.setItem('visitor_name', value);
+    } catch {
+      /* si no hay almacenamiento, seguimos igual */
+    }
+
     if (isSupabaseConfigured && supabase) {
+      // El id lo generamos aquí en vez de pedírselo a la base: leerlo de
+      // vuelta exigiría dar permiso de lectura a los visitantes, y esa
+      // tabla solo debe poder leerla el admin.
       const { error: dbError } = await supabase
         .from('visitors')
-        .insert({ name: value });
+        .insert({ id: visitorId(), name: value });
       if (dbError) {
         setSaving(false);
         setError('No se pudo continuar. Inténtalo de nuevo.');
@@ -38,6 +49,8 @@ export default function Letter({ onEnter }: LetterProps) {
         return;
       }
     }
+
+    track('enter', { meta: { name: value } });
 
     setSaving(false);
     setPhase('opening');

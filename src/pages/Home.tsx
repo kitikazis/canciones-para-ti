@@ -7,6 +7,7 @@ import Closing from '../components/Closing';
 import Letter from '../components/Letter';
 import MessageBox from '../components/MessageBox';
 import BottomNav, { type TabKey } from '../components/BottomNav';
+import { track } from '../lib/track';
 
 const NAME_KEY = 'visitor_name';
 const ORDER: Record<TabKey, number> = { inicio: 0, vannia: 1, yamir: 2 };
@@ -24,9 +25,15 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [tab]);
 
+  // Una visita = una carga de la página (solo si ya tenemos su nombre).
+  useEffect(() => {
+    if (name) track('page_view', { meta: { name } });
+  }, [name]);
+
   function changeTab(next: TabKey) {
     dir.current = ORDER[next] > ORDER[tab] ? 1 : -1;
     setTab(next);
+    track('tab', { meta: { from: tab, to: next } });
   }
 
   // ── Entrada: la carta que se abre ──

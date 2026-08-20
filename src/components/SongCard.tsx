@@ -4,6 +4,7 @@ import type { Song } from '../data/songs';
 import LyricsSheet from './LyricsSheet';
 import YouTubePlayer, { youtubeId } from './YouTubePlayer';
 import AudioPlayer from './AudioPlayer';
+import { track } from '../lib/track';
 
 interface Props {
   song: Song;
@@ -44,7 +45,12 @@ export default function SongCard({ song, index }: Props) {
           syncedLyrics={song.syncedLyrics}
         />
       ) : ytId ? (
-        <YouTubePlayer videoId={ytId} cover={song.cover} title={song.title} />
+        <YouTubePlayer
+          videoId={ytId}
+          cover={song.cover}
+          title={song.title}
+          artist={song.artist}
+        />
       ) : null}
 
       <div className="p-5 sm:p-6">
@@ -98,6 +104,14 @@ export default function SongCard({ song, index }: Props) {
               href={song.spotifyUrl}
               target="_blank"
               rel="noreferrer"
+              onClick={() =>
+                track('open_link', {
+                  song: song.title,
+                  artist: song.artist,
+                  source: 'spotify',
+                  meta: { url: song.spotifyUrl },
+                })
+              }
               className="btn-listen"
               title="Escuchar en Spotify"
             >
@@ -106,7 +120,13 @@ export default function SongCard({ song, index }: Props) {
             </a>
           )}
           {canShowLyrics && (
-            <button onClick={() => setShowLyrics(true)} className="btn-listen">
+            <button
+              onClick={() => {
+                setShowLyrics(true);
+                track('lyrics', { song: song.title, artist: song.artist });
+              }}
+              className="btn-listen"
+            >
               <LyricsIcon />
               Ver letra
             </button>
@@ -116,6 +136,14 @@ export default function SongCard({ song, index }: Props) {
               href={`https://www.youtube.com/watch?v=${ytId}`}
               target="_blank"
               rel="noreferrer"
+              onClick={() =>
+                track('open_link', {
+                  song: song.title,
+                  artist: song.artist,
+                  source: 'youtube',
+                  meta: { videoId: ytId },
+                })
+              }
               className="btn-listen"
               title="Si no se reproduce aquí, ábrelo en YouTube"
             >

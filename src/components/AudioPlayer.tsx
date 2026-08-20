@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { activeLine, fetchSyncedLyrics, parseLrc, type LrcLine } from '../lib/lrc';
 import { translateToSpanish } from '../lib/translate';
+import { track, WatchTimer } from '../lib/track';
 
 interface Props {
   src: string;
@@ -101,6 +102,57 @@ export default function AudioPlayer({ src, cover, title, artist, syncedLyrics }:
       el.muted = muted;
     }
   }, [volume, muted]);
+
+  // ── Registro de escucha ──
+  // Escuchamos los eventos del propio <audio> en vez de tocar los botones:
+  // así también contamos si pausa desde el teclado o la pantalla de bloqueo.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const base = { song: title, artist, source: 'audio' as const };
+    const timer = new WatchTimer(base);
+    let interval: number | undefined;
+
+    const dur = () => (isFinite(el.duration) ? el.duration : undefined);
+    const info = () => ({ ...base, position: el.currentTime, duration: dur() });
+
+    const onPlay = () => {
+      timer.update({ duration: dur() });
+      timer.start();
+      track('play', info());
+      window.clearInterval(interval);
+      interval = window.setInterval(() => timer.flush(el.currentTime), 20_000);
+    };
+    const onPause = () => {
+      // Al terminar, el navegador dispara 'pause' además de 'ended':
+      // lo ignoramos para no registrar dos veces lo mismo.
+      if (el.ended) return;
+      window.clearInterval(interval);
+      timer.flush(el.currentTime);
+      track('pause', info());
+    };
+    const onEnded = () => {
+      window.clearInterval(interval);
+      timer.flush(el.currentTime);
+      track('ended', { ...info(), seconds: Math.round(timer.watched) });
+    };
+    const onLeave = () => timer.flush(el.currentTime, true);
+
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('ended', onEnded);
+    window.addEventListener('pagehide', onLeave);
+
+    return () => {
+      window.clearInterval(interval);
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('ended', onEnded);
+      window.removeEventListener('pagehide', onLeave);
+      timer.flush(el.currentTime, true);
+    };
+  }, [src, title, artist]);
 
   // Sincroniza el estado si se sale de pantalla completa con el sistema
   // (tecla Escape, botón «atrás», etc.).

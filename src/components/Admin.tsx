@@ -7,6 +7,7 @@ import {
   isSupabaseConfigured,
   type Visitor,
   type Message,
+  type ActivityEvent,
 } from '../lib/supabase';
 
 export default function Admin() {
@@ -143,15 +144,18 @@ function Login() {
   );
 }
 
-type Tab = 'visitas' | 'mensajes';
+type Tab = 'visitas' | 'mensajes' | 'actividad';
 
-// ── Panel con pestañas: Visitas y Mensajes ──────────────────────────
+// ── Panel con pestañas: Visitas, Mensajes y Actividad ───────────────
 function Dashboard({ email }: { email: string }) {
   const [tab, setTab] = useState<Tab>('visitas');
 
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const [openPerson, setOpenPerson] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -190,6 +194,24 @@ function Dashboard({ email }: { email: string }) {
     setMessagesLoaded(true);
   }
 
+  async function loadEvents() {
+    setLoading(true);
+    setError(null);
+    const { data, error: e } = await supabase!
+      .from('events')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(2000);
+    setLoading(false);
+    if (e) {
+      setError('No se pudo cargar la actividad.');
+      console.error(e);
+      return;
+    }
+    setEvents((data ?? []) as ActivityEvent[]);
+    setEventsLoaded(true);
+  }
+
   useEffect(() => {
     loadVisitors();
   }, []);
@@ -197,8 +219,65 @@ function Dashboard({ email }: { email: string }) {
   // Carga los mensajes la primera vez que abres esa pestaña.
   useEffect(() => {
     if (tab === 'mensajes' && !messagesLoaded) loadMessages();
+    if (tab === 'actividad' && !eventsLoaded) loadEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  // ── Resúmenes de actividad ──
+  // Solo las filas de tipo 'progress' llevan segundos vistos de verdad;
+  // las demás son marcas de "hizo esto en tal momento".
+  const activity = useMemo(() => {
+    const totalSeconds = events.reduce(
+      (a, e) => a + (e.type === 'progress' ? e.seconds ?? 0 : 0),
+      0,
+    );
+    const plays = events.filter((e) => e.type === 'play').length;
+    const people = new Set(
+      events.map((e) => e.visitor_name || e.visitor_id || '?'),
+    ).size;
+    return { totalSeconds, plays, people };
+  }, [events]);
+
+  const bySong = useMemo(() => {
+    const m = new Map<
+      string,
+      { title: string; artist: string | null; seconds: number; plays: number }
+    >();
+    for (const e of events) {
+      if (!e.song_title) continue;
+      const cur = m.get(e.song_title) ?? {
+        title: e.song_title,
+        artist: e.song_artist,
+        seconds: 0,
+        plays: 0,
+      };
+      if (e.type === 'progress') cur.seconds += e.seconds ?? 0;
+      if (e.type === 'play') cur.plays += 1;
+      m.set(e.song_title, cur);
+    }
+    return [...m.values()].sort((a, b) => b.seconds - a.seconds);
+  }, [events]);
+
+  const byPerson = useMemo(() => {
+    const m = new Map<
+      string,
+      { name: string; seconds: number; last: string; list: ActivityEvent[] }
+    >();
+    for (const e of events) {
+      const key = e.visitor_name || e.visitor_id || 'Anónimo';
+      const cur = m.get(key) ?? {
+        name: key,
+        seconds: 0,
+        last: e.created_at,
+        list: [],
+      };
+      if (e.type === 'progress') cur.seconds += e.seconds ?? 0;
+      if (e.created_at > cur.last) cur.last = e.created_at;
+      cur.list.push(e);
+      m.set(key, cur);
+    }
+    return [...m.values()].sort((a, b) => b.last.localeCompare(a.last));
+  }, [events]);
 
   const todayCount = useMemo(() => {
     const today = new Date().toDateString();
@@ -213,7 +292,12 @@ function Dashboard({ email }: { email: string }) {
     return visitors.filter((v) => v.name.toLowerCase().includes(q));
   }, [visitors, query]);
 
-  const refresh = () => (tab === 'visitas' ? loadVisitors() : loadMessages());
+  const refresh = () =>
+    tab === 'visitas'
+      ? loadVisitors()
+      : tab === 'mensajes'
+        ? loadMessages()
+        : loadEvents();
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-6 py-12">
@@ -252,6 +336,13 @@ function Dashboard({ email }: { email: string }) {
         <TabButton active={tab === 'mensajes'} onClick={() => setTab('mensajes')}>
           Mensajes
           {messagesLoaded && <Badge>{messages.length}</Badge>}
+        </TabButton>
+        <TabButton
+          active={tab === 'actividad'}
+          onClick={() => setTab('actividad')}
+        >
+          Actividad
+          {eventsLoaded && <Badge>{events.length}</Badge>}
         </TabButton>
       </div>
 
@@ -351,8 +442,174 @@ function Dashboard({ email }: { email: string }) {
           )}
         </>
       )}
+
+      {/* ── Pestaña ACTIVIDAD ── */}
+      {tab === 'actividad' && (
+        <>
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <Stat
+              label="Tiempo escuchado"
+              value={fmtDur(activity.totalSeconds)}
+              small
+            />
+            <Stat label="Reproducciones" value={activity.plays} />
+            <Stat label="Personas" value={activity.people} />
+          </div>
+
+          {!error && eventsLoaded && events.length === 0 && !loading && (
+            <EmptyState text="Todavía no hay actividad. En cuanto alguien entre y le dé play a una canción, verás aquí qué escuchó y cuánto tiempo estuvo." />
+          )}
+
+          {/* Ranking de canciones por tiempo real escuchado */}
+          {bySong.length > 0 && (
+            <section className="mt-10">
+              <h2 className="eyebrow">Lo más escuchado</h2>
+              <ul className="mt-4 flex flex-col gap-2">
+                {bySong.map((song, i) => (
+                  <Row key={song.title} index={i}>
+                    <span className="w-6 shrink-0 text-center font-display text-sm text-gold/70">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-ink">
+                        {song.title}
+                      </p>
+                      <p className="truncate text-xs text-ink-soft">
+                        {song.artist || 'Sin artista'} · {song.plays}{' '}
+                        {song.plays === 1 ? 'reproducción' : 'reproducciones'}
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-display text-lg text-wine-soft">
+                      {fmtDur(song.seconds)}
+                    </span>
+                  </Row>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Qué hizo cada persona, paso a paso */}
+          {byPerson.length > 0 && (
+            <section className="mt-10">
+              <h2 className="eyebrow">Qué hizo cada persona</h2>
+              <ul className="mt-4 flex flex-col gap-2">
+                {byPerson.map((person, i) => {
+                  const open = openPerson === person.name;
+                  return (
+                    <motion.li
+                      key={person.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: Math.min(i * 0.03, 0.4) }}
+                      className="overflow-hidden rounded-2xl border border-cream-border bg-cream-surface transition-colors hover:border-wine/30"
+                    >
+                      <button
+                        onClick={() => setOpenPerson(open ? null : person.name)}
+                        className="flex w-full items-center gap-4 px-4 py-3 text-left"
+                      >
+                        <Avatar name={person.name} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-ink">
+                            {person.name}
+                          </p>
+                          <p className="text-xs text-ink-soft">
+                            {fmtDur(person.seconds)} escuchados ·{' '}
+                            {person.list.length}{' '}
+                            {person.list.length === 1 ? 'acción' : 'acciones'}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-xs text-ink-soft/70">
+                          {timeAgo(person.last)}
+                        </span>
+                      </button>
+
+                      {open && (
+                        <ol className="border-t border-cream-border/70 px-4 py-3">
+                          {person.list.slice(0, 60).map((e) => (
+                            <li
+                              key={e.id}
+                              className="flex gap-3 border-l border-cream-border py-1.5 pl-4 text-sm"
+                            >
+                              <span className="w-28 shrink-0 text-xs text-ink-soft/70">
+                                {fullDate(e.created_at)}
+                              </span>
+                              <span className="min-w-0 flex-1 text-ink-soft">
+                                {describe(e)}
+                              </span>
+                            </li>
+                          ))}
+                          {person.list.length > 60 && (
+                            <li className="pl-4 pt-2 text-xs text-ink-soft/60">
+                              …y {person.list.length - 60} acciones más.
+                            </li>
+                          )}
+                        </ol>
+                      )}
+                    </motion.li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
+}
+
+// ── Lectura humana de la actividad ──────────────────────────────────
+
+/** Segundos a algo legible: "45 s", "12 min", "1 h 20 min". */
+function fmtDur(total: number): string {
+  const s = Math.round(total);
+  if (s < 60) return `${s} s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  return rest ? `${h} h ${rest} min` : `${h} h`;
+}
+
+/** Convierte una fila de `events` en una frase. */
+function describe(e: ActivityEvent): string {
+  const song = e.song_title ? `«${e.song_title}»` : '';
+  switch (e.type) {
+    case 'enter':
+      return 'Escribió su nombre y abrió la carta';
+    case 'page_view':
+      return 'Entró a la página';
+    case 'tab': {
+      const to = (e.meta as { to?: string } | null)?.to;
+      return to ? `Se fue a la sección «${to}»` : 'Cambió de sección';
+    }
+    case 'play':
+      return `Le dio play a ${song}`;
+    case 'pause':
+      return `Pausó ${song}${
+        e.position != null ? ` en el minuto ${mmss(e.position)}` : ''
+      }`;
+    case 'progress':
+      return `Escuchó ${fmtDur(e.seconds ?? 0)} de ${song}`;
+    case 'ended':
+      return `Terminó ${song} entera`;
+    case 'lyrics':
+      return `Abrió la letra de ${song}`;
+    case 'open_link':
+      return `Se fue a ${e.source === 'spotify' ? 'Spotify' : 'YouTube'} con ${song}`;
+    case 'message':
+      return 'Te envió un mensaje';
+    default:
+      return e.type;
+  }
+}
+
+/** Segundos a "m:ss", para decir en qué punto de la canción pasó algo. */
+function mmss(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60)
+    .toString()
+    .padStart(2, '0');
+  return `${m}:${s}`;
 }
 
 // ── Piezas reutilizables ────────────────────────────────────────────

@@ -65,3 +65,50 @@ create policy "lectura mensajes solo admin"
   for select
   to authenticated
   using (true);
+
+-- ─────────────────────────────────────────────────────────────
+--  ACTIVIDAD — registro detallado de lo que hace cada visitante
+-- ─────────────────────────────────────────────────────────────
+
+-- 9) Tabla de eventos. Cada fila es UNA cosa que hizo el visitante:
+--    entrar, cambiar de sección, dar play, ver 20 segundos de un video,
+--    abrir la letra, irse a Spotify, enviar un mensaje...
+create table if not exists public.events (
+  id           uuid primary key default gen_random_uuid(),
+  visitor_id   uuid,          -- id del visitante (lo genera la propia web)
+  visitor_name text,          -- nombre que escribió al entrar
+  session_id   text,          -- una visita concreta (se renueva al cerrar pestaña)
+  type         text not null, -- 'enter','page_view','tab','play','pause','progress',...
+  song_title   text,
+  song_artist  text,
+  source       text,          -- 'youtube' | 'audio' | 'spotify'
+  position     numeric,       -- segundo del medio donde ocurrió
+  duration     numeric,       -- duración total del medio
+  seconds      numeric,       -- segundos REALMENTE vistos en este tramo
+  meta         jsonb,         -- cualquier extra (videoId, destino del enlace...)
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists events_created_at_idx
+  on public.events (created_at desc);
+create index if not exists events_visitor_idx
+  on public.events (visitor_name, created_at desc);
+
+-- 10) Seguridad por filas.
+alter table public.events enable row level security;
+
+-- 11) Cualquier visitante puede REGISTRAR su actividad (insert), sin login.
+drop policy if exists "cualquiera registra actividad" on public.events;
+create policy "cualquiera registra actividad"
+  on public.events
+  for insert
+  to anon
+  with check (true);
+
+-- 12) Solo el admin (con sesión) puede LEER la actividad.
+drop policy if exists "lectura actividad solo admin" on public.events;
+create policy "lectura actividad solo admin"
+  on public.events
+  for select
+  to authenticated
+  using (true);

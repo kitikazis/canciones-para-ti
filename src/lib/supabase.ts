@@ -28,3 +28,20 @@ export interface Message {
   message: string;
   created_at: string;
 }
+
+/** Un evento de actividad de la tabla `events` */
+export interface ActivityEvent {
+  id: string;
+  visitor_id: string | null;
+  visitor_name: string | null;
+  session_id: string | null;
+  type: string;
+  song_title: string | null;
+  song_artist: string | null;
+  source: string | null;
+  position: number | null;
+  duration: number | null;
+  seconds: number | null;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+}

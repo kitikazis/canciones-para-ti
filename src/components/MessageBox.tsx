@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { track } from '../lib/track';
 
 interface MessageBoxProps {
   /** Nombre de quien escribe (ya lo sabemos por la entrada). */
@@ -40,6 +41,7 @@ export default function MessageBox({ visitorName }: MessageBoxProps) {
       console.error(dbError);
       return;
     }
+    track('message', { meta: { length: value.length } });
     setSent(true);
   }
 
