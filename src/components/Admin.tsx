@@ -328,7 +328,7 @@ function Dashboard({ email }: { email: string }) {
       </div>
 
       {/* Pestañas */}
-      <div className="mt-8 inline-flex rounded-full border border-cream-border bg-cream-surface p-1">
+      <div className="mt-8 flex w-full rounded-full border border-cream-border bg-cream-surface p-1 sm:inline-flex sm:w-auto">
         <TabButton active={tab === 'visitas'} onClick={() => setTab('visitas')}>
           Visitas
           <Badge>{visitors.length}</Badge>
@@ -528,9 +528,9 @@ function Dashboard({ email }: { email: string }) {
                           {person.list.slice(0, 60).map((e) => (
                             <li
                               key={e.id}
-                              className="flex gap-3 border-l border-cream-border py-1.5 pl-4 text-sm"
+                              className="flex flex-col gap-0.5 border-l border-cream-border py-1.5 pl-4 text-sm sm:flex-row sm:gap-3"
                             >
-                              <span className="w-28 shrink-0 text-xs text-ink-soft/70">
+                              <span className="shrink-0 text-xs text-ink-soft/70 sm:w-28">
                                 {fullDate(e.created_at)}
                               </span>
                               <span className="min-w-0 flex-1 text-ink-soft">
@@ -625,7 +625,7 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition ${
+      className={`inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2 py-2 text-[13px] font-medium transition sm:flex-none sm:gap-2 sm:px-5 sm:text-sm ${
         active
           ? 'bg-wine text-white shadow-[0_8px_20px_-10px_rgba(190,18,60,0.9)]'
           : 'text-ink-soft hover:text-ink'
@@ -675,16 +675,16 @@ function Stat({
   small?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-cream-border bg-cream-surface p-4 text-center">
+    <div className="rounded-2xl border border-cream-border bg-cream-surface p-3 text-center sm:p-4">
       <p
         className={`truncate font-display font-medium text-ink ${
-          small ? 'text-xl' : 'text-4xl'
+          small ? 'text-base sm:text-xl' : 'text-2xl sm:text-4xl'
         }`}
         title={String(value)}
       >
         {value}
       </p>
-      <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+      <p className="mt-1 truncate text-[10px] uppercase tracking-[0.12em] text-ink-soft sm:text-[11px] sm:tracking-[0.18em]">
         {label}
       </p>
     </div>

@@ -1,10 +1,13 @@
 # Cabeceras de caché para Netlify (y compatibles).
-# Los archivos con hash se pueden cachear para siempre.
+#
+# Regla general: NADA se cachea sin revalidar. Cubre el HTML de todas las
+# rutas (/, /admin, cualquier otra) y también el favicon, que los
+# navegadores guardan con especial insistencia.
+/*
+  Cache-Control: no-cache
+
+# Excepción: los archivos con hash en el nombre. Como su URL cambia en cada
+# build, se pueden guardar para siempre. Esta regla es más específica que
+# la anterior, así que tiene prioridad.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
-
-# El HTML nunca se cachea, para que siempre cargue la última versión.
-/
-  Cache-Control: public, max-age=0, must-revalidate
-/index.html
-  Cache-Control: public, max-age=0, must-revalidate
